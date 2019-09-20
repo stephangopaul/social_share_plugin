@@ -22,7 +22,7 @@ import com.facebook.share.model.ShareLinkContent;
 import com.facebook.share.model.SharePhoto;
 import com.facebook.share.model.SharePhotoContent;
 import com.facebook.share.widget.ShareDialog;
-import com.twitter.sdk.android.tweetcomposer.TweetComposer;
+//import com.twitter.sdk.android.tweetcomposer.TweetComposer;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -45,9 +45,9 @@ import static android.app.Activity.RESULT_OK;
 public class SocialSharePlugin implements MethodCallHandler, PluginRegistry.ActivityResultListener {
     private final static String INSTAGRAM_PACKAGE_NAME = "com.instagram.android";
     private final static String FACEBOOK_PACKAGE_NAME = "com.facebook.katana";
-    private final static String TWITTER_PACKAGE_NAME = "com.twitter.android";
+    // private final static String TWITTER_PACKAGE_NAME = "com.twitter.android";
 
-    private final static int TWITTER_REQUEST_CODE = 0xc0ce;
+    // private final static int TWITTER_REQUEST_CODE = 0xc0ce;
 
     private final Registrar registrar;
     private final MethodChannel channel;
@@ -105,18 +105,17 @@ public class SocialSharePlugin implements MethodCallHandler, PluginRegistry.Acti
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d("SocialSharePlugin", "onActivityResult");
-        if (requestCode == TWITTER_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
-                Log.d("SocialSharePlugin", "Twitter done.");
-                channel.invokeMethod("onSuccess", null);
-            } else if (resultCode == RESULT_CANCELED) {
-                Log.d("SocialSharePlugin", "Twitter cancelled.");
-                channel.invokeMethod("onCancel", null);
-
-            }
-
-            return true;
-        }
+        /*
+         * if (requestCode == TWITTER_REQUEST_CODE) { if (resultCode == RESULT_OK) {
+         * Log.d("SocialSharePlugin", "Twitter done.");
+         * channel.invokeMethod("onSuccess", null); } else if (resultCode ==
+         * RESULT_CANCELED) { Log.d("SocialSharePlugin", "Twitter cancelled.");
+         * channel.invokeMethod("onCancel", null);
+         * 
+         * }
+         * 
+         * return true; }
+         */
 
         return callbackManager.onActivityResult(requestCode, resultCode, data);
     }
@@ -125,62 +124,61 @@ public class SocialSharePlugin implements MethodCallHandler, PluginRegistry.Acti
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         final PackageManager pm = registrar.activeContext().getPackageManager();
         switch (call.method) {
-            case "getPlatformVersion":
-                result.success("Android " + android.os.Build.VERSION.RELEASE);
-                break;
-            case "shareToFeedInstagram":
-                try {
-                    pm.getPackageInfo(INSTAGRAM_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
-                    instagramShare(call.<String>argument("type"), call.<String>argument("path"));
-                } catch (PackageManager.NameNotFoundException e) {
-                    openPlayStore(INSTAGRAM_PACKAGE_NAME);
-                }
+        case "getPlatformVersion":
+            result.success("Android " + android.os.Build.VERSION.RELEASE);
+            break;
+        case "shareToFeedInstagram":
+            try {
+                pm.getPackageInfo(INSTAGRAM_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
+                instagramShare(call.<String>argument("type"), call.<String>argument("path"));
+            } catch (PackageManager.NameNotFoundException e) {
+                openPlayStore(INSTAGRAM_PACKAGE_NAME);
+            }
 
-                result.success(null);
-                break;
-            case "shareToFeedFacebook":
-                try {
-                    pm.getPackageInfo(FACEBOOK_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
-                    facebookShare(call.<String>argument("caption"), call.<String>argument("path"));
-                } catch (PackageManager.NameNotFoundException e) {
-                    openPlayStore(FACEBOOK_PACKAGE_NAME);
-                }
+            result.success(null);
+            break;
+        case "shareToFeedFacebook":
+            try {
+                pm.getPackageInfo(FACEBOOK_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
+                facebookShare(call.<String>argument("caption"), call.<String>argument("path"));
+            } catch (PackageManager.NameNotFoundException e) {
+                openPlayStore(FACEBOOK_PACKAGE_NAME);
+            }
 
-                result.success(null);
-                break;
-            case "shareToFeedFacebookLink":
-                try {
-                    AccessToken accessToken = AccessToken.getCurrentAccessToken();
-                    boolean isLoggedIn = accessToken != null && !accessToken.isExpired();
-                    pm.getPackageInfo(FACEBOOK_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
-                    if (isLoggedIn) {
-                        facebookShareLink(call.<String>argument("quote"), call.<String>argument("url"), accessToken.getToken());
-                        result.success(true);
-                    } else {
-                        this.result = result;
-                        this.quote = call.argument("quote");
-                        this.url = call.argument("url");
-                        this.loginManager.setLoginBehavior(LoginBehavior.NATIVE_WITH_FALLBACK);
-                        this.loginManager.logInWithReadPermissions(registrar.activity(), Collections.singletonList("email"));
-                    }
-                } catch (PackageManager.NameNotFoundException e) {
-                    openPlayStore(FACEBOOK_PACKAGE_NAME);
-                    result.success(false);
-                }
-                break;
-            case "shareToTwitter":
-                try {
-                    pm.getPackageInfo(TWITTER_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
-                    twitterShare(call.<String>argument("text"), call.<String>argument("url"));
+            result.success(null);
+            break;
+        case "shareToFeedFacebookLink":
+            try {
+                AccessToken accessToken = AccessToken.getCurrentAccessToken();
+                boolean isLoggedIn = accessToken != null && !accessToken.isExpired();
+                pm.getPackageInfo(FACEBOOK_PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
+                if (isLoggedIn) {
+                    facebookShareLink(call.<String>argument("quote"), call.<String>argument("url"),
+                            accessToken.getToken());
                     result.success(true);
-                } catch (PackageManager.NameNotFoundException e) {
-                    openPlayStore(TWITTER_PACKAGE_NAME);
-                    result.success(false);
+                } else {
+                    this.result = result;
+                    this.quote = call.argument("quote");
+                    this.url = call.argument("url");
+                    this.loginManager.setLoginBehavior(LoginBehavior.NATIVE_WITH_FALLBACK);
+                    this.loginManager.logInWithReadPermissions(registrar.activity(),
+                            Collections.singletonList("email"));
                 }
-                break;
-            default:
-                result.notImplemented();
-                break;
+            } catch (PackageManager.NameNotFoundException e) {
+                openPlayStore(FACEBOOK_PACKAGE_NAME);
+                result.success(false);
+            }
+            break;
+        /*
+         * case "shareToTwitter": try { pm.getPackageInfo(TWITTER_PACKAGE_NAME,
+         * PackageManager.GET_ACTIVITIES); twitterShare(call.<String>argument("text"),
+         * call.<String>argument("url")); result.success(true); } catch
+         * (PackageManager.NameNotFoundException e) {
+         * openPlayStore(TWITTER_PACKAGE_NAME); result.success(false); } break;
+         */
+        default:
+            result.notImplemented();
+            break;
         }
     }
 
@@ -200,7 +198,7 @@ public class SocialSharePlugin implements MethodCallHandler, PluginRegistry.Acti
     private void instagramShare(String type, String imagePath) {
         final Context context = registrar.activeContext();
         final File image = new File(imagePath);
-//        final Uri uri = Uri.fromFile(image);
+        // final Uri uri = Uri.fromFile(image);
         final Uri uri = FileProvider.getUriForFile(context,
                 context.getApplicationContext().getPackageName() + ".social.share.fileprovider", image);
         final Intent share = new Intent(Intent.ACTION_SEND);
@@ -225,8 +223,7 @@ public class SocialSharePlugin implements MethodCallHandler, PluginRegistry.Acti
 
     private void facebookShareLink(String quote, String url, final String token) {
         final Uri uri = Uri.parse(url);
-        final ShareLinkContent content = new ShareLinkContent.Builder()
-                .setContentUrl(uri).setQuote(quote).build();
+        final ShareLinkContent content = new ShareLinkContent.Builder().setContentUrl(uri).setQuote(quote).build();
         final ShareDialog shareDialog = new ShareDialog(registrar.activity());
         shareDialog.registerCallback(callbackManager, new FacebookCallback<Sharer.Result>() {
             @Override
@@ -253,18 +250,14 @@ public class SocialSharePlugin implements MethodCallHandler, PluginRegistry.Acti
         }
     }
 
-    private void twitterShare(String text, String url) {
-        try {
-            TweetComposer.Builder builder = new TweetComposer
-                    .Builder(registrar.activity()).text(text);
-            if (url != null && url.length() > 0) {
-                builder.url(new URL(url));
-            }
-
-            final Intent intent = builder.createIntent();
-            registrar.activity().startActivityForResult(intent, TWITTER_REQUEST_CODE);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-    }
+    /*
+     * private void twitterShare(String text, String url) { try {
+     * TweetComposer.Builder builder = new TweetComposer
+     * .Builder(registrar.activity()).text(text); if (url != null && url.length() >
+     * 0) { builder.url(new URL(url)); }
+     * 
+     * final Intent intent = builder.createIntent();
+     * registrar.activity().startActivityForResult(intent, TWITTER_REQUEST_CODE); }
+     * catch (MalformedURLException e) { e.printStackTrace(); } }
+     */
 }

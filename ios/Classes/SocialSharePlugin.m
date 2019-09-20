@@ -2,7 +2,7 @@
 #import <FBSDKCoreKit/FBSDKCoreKit.h>
 #import <FBSDKShareKit/FBSDKShareKit.h>
 #import <FBSDKLoginKit/FBSDKLoginKit.h>
-#import <TwitterKit/TWTRKit.h>
+//#import <TwitterKit/TWTRKit.h>
 
 @implementation SocialSharePlugin {
     FlutterMethodChannel* _channel;
@@ -49,7 +49,8 @@
                 openURL:url
       sourceApplication:options[UIApplicationOpenURLOptionsSourceApplicationKey]
              annotation:options[UIApplicationOpenURLOptionsAnnotationKey]];
-  return handled || [[Twitter sharedInstance] application:application openURL:url options:options];
+  //return handled || [[Twitter sharedInstance] application:application openURL:url options:options];
+    return handled;
 }
 
 - (BOOL)application:(UIApplication *)application
@@ -119,7 +120,7 @@
           [[UIApplication sharedApplication] openURL:[NSURL URLWithString:fbLink]];
           result(false);
       }
-  } else if([@"shareToTwitter" isEqualToString:call.method]) {
+  } /*else if([@"shareToTwitter" isEqualToString:call.method]) {
       NSURL *twitterURL = [NSURL URLWithString:@"twitter://"];
       if([[UIApplication sharedApplication] canOpenURL:twitterURL]) {
           [self twitterShare:call.arguments[@"text"] url:call.arguments[@"url"]];
@@ -129,7 +130,7 @@
           [[UIApplication sharedApplication] openURL:[NSURL URLWithString:fbLink]];
           result(false);
       }
-  } else {
+  }*/ else {
     result(FlutterMethodNotImplemented);
   }
 }
@@ -183,6 +184,7 @@
     };
 }
 
+/*
 - (void)twitterShare:(NSString*)text
                  url:(NSString*)url {
     UIViewController* controller = [UIApplication sharedApplication].delegate.window.rootViewController;
@@ -216,7 +218,7 @@
 //            }
 //        }];
 //    }
-}
+}*/
 
 - (void)sharer:(id<FBSDKSharing>)sharer didCompleteWithResults:(NSDictionary *)results{
     [_channel invokeMethod:@"onSuccess" arguments:_token];
